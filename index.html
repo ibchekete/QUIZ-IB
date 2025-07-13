@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connais-tu réellement IB Chékété ?</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: linear-gradient(to right, #fdf6e3, #e0f7fa);
+    }
+    #quiz, #result, #question-container, #leaderboard-container {
+      display: none;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .question {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    .option {
+      margin: 5px 0;
+    }
+    .avatar-img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    #leaderboard {
+      margin-top: 20px;
+      padding: 10px;
+      background: #ffffffaa;
+      border-radius: 8px;
+    }
+    .player-entry {
+      margin-bottom: 5px;
+    }
+    .decor {
+      font-size: 24px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🌸 Quiz : Connais-tu réellement IB Chékété ? 💰</h2>
+
+  <div id="start">
+    <label>Pseudo : <input type="text" id="username"></label><br><br>
+    <label>Mot de passe : <input type="password" id="password"></label><br><br>
+    <label>Choisis un avatar : <input type="file" id="avatarInput" accept="image/*"></label><br><br>
+    <button onclick="validateAccess()">Commencer</button>
+    <p id="error" style="color:red"></p>
+  </div>
+
+  <div id="quiz">
+    <div id="timer"></div>
+    <div id="question-container">
+      <p id="question" class="question"></p>
+      <div id="options"></div>
+      <button onclick="nextQuestion()">Suivant</button>
+    </div>
+  </div>
+
+  <div id="result">
+    <h3>🌟 Quiz terminé ! 🌟</h3>
+    <p id="score"></p>
+    <p id="success"></p>
+    <p id="duration"></p>
+  </div>
+
+  <div id="leaderboard-container">
+    <h3>🏆 Classement en direct</h3>
+    <div id="leaderboard"></div>
+  </div>
+
+  <script>
+    const PASSWORD = "56DD@ib57FR58";
+    const TIME_LIMIT = 20;
+    let currentQuestion = 0, score = 0, timer, timeLeft, startTime;
+    const players = [];
+    let avatarURL = "";
+// Les questions et les options
+    const questions = [
+      {
+        question: "Quel est le nom complet de chekété à l'état civil ?",
+        options: ["Boureima kouraogo", "Ibrahim check kouraogo", "Ibrahim Kouraogo", "Iblo ibrahim check Kouraogo"],
+        answer: 3
+      },
+      {
+        question: "Quel âge a chekété ?",
+        options: ["29 ans", "20 ans", "23 ans", "25 ans"],
+        answer: 2
+      },
+      {
+        question: "C'est quoi le divertissement préféré de chekété ?",
+        options: ["films & series", "music", "lecture", "Football"],
+        answer: 3
+      },
+      {
+        question: "Quel est le genre de go (fille) de chekété ?",
+        options: [
+          "respectueuse, compréhensive, Authentique , Modeste, Altruiste, Éprise de l’âme, pas du paraître",
+          "Simple, Pure, stricte, et belle forme.",
+          "Modeste, compréhensive, clair, bavard",
+          "rebelle , sportif, intentionnée,mysterieuse"
+        ],
+        answer: 0
+      },
+      {
+        question: "c'est quoi le plat préféré de chekété ?",
+        options: [
+          "riz gras poisson","Riz sauce graine","riz sauce tomate","Foutou sauce sioko", "tout"],
+        answer:4
+      },
+      {
+        question: "Quelle est ma boisson favorite ?",
+        options: ["sucrerie","Alcool","l'eau","autres"],
+        answer:3
+      },
+      {
+        question: "Quand je suis énervé, qu’est-ce que je fais ?",
+        options: [" je casse tout","je me defoule sur quelqu'un","je m'éloigne des gens","je me fache jamais"],
+        answer:3
+      },
+      {
+        question: "Est-ce que je suis du genre jaloux(se), oui ou non ?",
+        options: [ " oui","non"],
+        answer:1
+      },
+      {
+        question:"j’ai déjà dormi en classe.",
+        options: ["vrai","faux"],
+        answer:0
+      },
+      {
+        question: "Quel est le prénom de ma mère?",
+        options: ["Moussa","cherifa","Rayna","shadèn","autre"],
+        answer:4
+      },
+      {
+        question: "Dans quelle ville ou quel quartier j’ai grandi ?",
+        options: ["Gagnoa","Abidjan","Ouaga","Koupela","Patte d'oie"],
+        answer:0,
+      },
+      {
+        question: "Si je devais choisir entre deux choses que serait ?",
+        options: ["1 million d'Euro","l’amour de ma vie","autres"],
+        answer:0
+      },
+      {
+        question: "Qui est mon/ma meilleur(e) ami(e) ?",
+        options: ["Flavia","carmelle","latif","binjamin","Rahinatou","Vakaba","autres"],
+        answer:5
+      },
+      {
+        question: "chekete a t'il une go (copine) ?",
+        options: ["oui","plusieurs","zero dans la base","2 go"],
+        answer:2
+      },
+      {
+        question: "je suis chauve",
+        options: ["non","très","à devenir bientot"],
+        answer:2
+      },
+      {
+        question:"Quel est le footballeur préféré de chekété ?",
+        options: ["pélé","Robinho","Zidane","Léo Messi","Ronaldo bresilin","Cristiano Ronaldo","Gavi","Ronaldinho Gaucho"],
+        answer:7
+      }
+      // Ajoute les autres questions ici...
+    ];
+
+    function validateAccess() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const avatarFile = document.getElementById("avatarInput").files[0];
+
+      if (!username || !password) {
+        document.getElementById("error").innerText = "Pseudo et mot de passe requis.";
+        return;
+      }
+      if (password !== PASSWORD) {
+        document.getElementById("error").innerText = "Mot de passe incorrect.";
+        return;
+      }
+
+      if (avatarFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          avatarURL = e.target.result;
+          startQuiz(username);
+        }
+        reader.readAsDataURL(avatarFile);
+      } else {
+        avatarURL = "https://via.placeholder.com/40";
+        startQuiz(username);
+      }
+    }
+
+    function startQuiz(username) {
+      document.getElementById("start").style.display = "none";
+      document.getElementById("quiz").style.display = "block";
+      document.getElementById("leaderboard-container").style.display = "block";
+      startTime = Date.now();
+      players.push({ name: username, score: 0, avatar: avatarURL, duration: 0 });
+      showQuestion();
+    }
+
+    function showQuestion() {
+      if (currentQuestion >= questions.length) {
+        endQuiz();
+        return;
+      }
+      const q = questions[currentQuestion];
+      document.getElementById("question").innerText = q.question;
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      q.options.forEach((opt, i) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerHTML = `<label><input type='radio' name='option' value='${i}'> ${opt}</label>`;
+        optionsDiv.appendChild(div);
+      });
+      startTimer();
+    }
+
+    function startTimer() {
+      timeLeft = TIME_LIMIT;
+      document.getElementById("timer").innerText = `⏳ Temps restant : ${timeLeft} s`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerText = `⏳ Temps restant : ${timeLeft} s`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          nextQuestion();
+        }
+      }, 1000);
+    }
+
+    function nextQuestion() {
+      clearInterval(timer);
+      const selected = document.querySelector("input[name='option']:checked");
+      if (selected && parseInt(selected.value) === questions[currentQuestion].answer) {
+        score++;
+      }
+      currentQuestion++;
+      showQuestion();
+    }
+
+    function endQuiz() {
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+      const username = document.getElementById("username").value.trim();
+      const percent = Math.round((score / questions.length) * 100);
+
+      document.getElementById("quiz").style.display = "none";
+      document.getElementById("result").style.display = "block";
+      document.getElementById("score").innerText = `🎯 ${username}, tu as obtenu ${score} / ${questions.length}`;
+      document.getElementById("success").innerText = `💯 Taux de réussite : ${percent}%`;
+      document.getElementById("duration").innerText = `⏱️ Temps écoulé : ${duration} secondes`;
+
+      const player = players.find(p => p.name === username);
+      if (player) {
+        player.score = score;
+        player.duration = duration;
+      }
+      updateLeaderboard();
+    }
+
+    function updateLeaderboard() {
+      players.sort((a, b) => b.score - a.score || a.duration - b.duration);
+      const lbDiv = document.getElementById("leaderboard");
+      lbDiv.innerHTML = "";
+      players.forEach(player => {
+        lbDiv.innerHTML += `<div class='player-entry'>🌸💰 <img src='${player.avatar}' class='avatar-img'> <strong>${player.name}</strong> - ${player.score} pts - ${player.duration}s</div>`;
+      });
+    }
+  </script>
+</body>
+</html>
